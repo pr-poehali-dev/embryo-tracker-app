@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Embryo3D from '@/components/Embryo3D';
-import WeekCalendar from '@/components/WeekCalendar';
-import WellbeingTracker from '@/components/WellbeingTracker';
 import WeekInfo from '@/components/WeekInfo';
+import WellbeingTracker from '@/components/WellbeingTracker';
 import Icon from '@/components/ui/icon';
 
 type Tab = 'home' | 'embryo' | 'development' | 'tips' | 'profile';
@@ -16,28 +15,78 @@ function getCurrentWeek(start: Date): number {
   return Math.min(40, Math.max(1, Math.floor(days / 7) + 1));
 }
 
+function getCurrentDay(start: Date): number {
+  const now = new Date();
+  const diff = now.getTime() - start.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  return (days % 7) + 1;
+}
+
+const DAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+function getWeekDates(baseDate: Date, offset: number) {
+  const d = new Date(baseDate);
+  d.setDate(d.getDate() + offset * 7);
+  const dayOfWeek = d.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  d.setDate(d.getDate() + diff);
+  const dates: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(d);
+    dd.setDate(d.getDate() + i);
+    dates.push(dd);
+  }
+  return dates;
+}
+
+const INSIGHTS = [
+  { title: 'Записать\nсимптомы', icon: 'plus', color: 'bg-mint', textColor: 'text-foreground' },
+  { title: 'Беременность\nсегодня', icon: 'baby', color: 'border-primary/30 border-2 bg-white', textColor: 'text-primary' },
+  { title: 'Питание\nна неделю', icon: 'apple', color: 'border-primary/30 border-2 bg-white', textColor: 'text-primary' },
+  { title: 'Упражнения\nдля мамы', icon: 'heart', color: 'border-primary/30 border-2 bg-white', textColor: 'text-foreground' },
+];
+
 const TIPS = [
   { week: '1–13', title: 'I триместр', icon: '🌱', color: 'bg-peach/60', items: ['Принимай фолиевую кислоту 400 мкг/день', 'Откажись от алкоголя и сигарет', 'Первый визит к гинекологу до 12 нед', 'Имбирный чай помогает при тошноте'] },
   { week: '14–26', title: 'II триместр', icon: '🌸', color: 'bg-blush/60', items: ['Второй скрининг на 18–21 нед', 'Начни разговаривать с малышом', 'Гимнастика для беременных', 'Сон на левом боку'] },
   { week: '27–40', title: 'III триместр', icon: '🎀', color: 'bg-lavender/60', items: ['Курсы подготовки к родам', 'Следи за шевелениями ежедневно', 'Собери сумку в роддом заранее', 'Отдыхай и береги себя'] },
-  { week: 'Питание', title: 'Питание', icon: '🥗', color: 'bg-mint/60', items: ['Белок: мясо, рыба, яйца, бобовые', 'Кальций: молочные продукты', 'Железо: говядина, шпинат, гранат', 'Избегай сырой рыбы и мягких сыров'] },
+  { week: 'Всегда', title: 'Питание', icon: '🥗', color: 'bg-mint/60', items: ['Белок: мясо, рыба, яйца, бобовые', 'Кальций: молочные продукты', 'Железо: говядина, шпинат, гранат', 'Избегай сырой рыбы и мягких сыров'] },
 ];
 
 const Index: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [currentWeek, setCurrentWeek] = useState(() => getCurrentWeek(PREGNANCY_START));
+  const [currentDay, setCurrentDay] = useState(() => getCurrentDay(PREGNANCY_START));
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [profileName, setProfileName] = useState('Мама');
   const [dueDate, setDueDate] = useState('2026-03-08');
   const [editingProfile, setEditingProfile] = useState(false);
-  const [animKey, setAnimKey] = useState(0);
+  const [showDetails, setShowDetails] = useState(false);
+  const insightsRef = useRef<HTMLDivElement>(null);
 
+  const weekDates = getWeekDates(new Date(), weekOffset);
+  const today = new Date();
   const daysLeft = Math.max(0, Math.round(
-    (new Date(dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    (new Date(dueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   ));
+  const currentMonthName = weekDates[3].toLocaleDateString('ru', { month: 'long' });
 
-  const handleWeekChange = (week: number) => {
-    setCurrentWeek(week);
-    setAnimKey(k => k + 1);
+  const isToday = (d: Date) => d.toDateString() === today.toDateString();
+  const isSelected = (d: Date) => d.toDateString() === selectedDate.toDateString();
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    const diff = date.getTime() - PREGNANCY_START.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const w = Math.min(40, Math.max(1, Math.floor(days / 7) + 1));
+    const d = (days % 7) + 1;
+    setCurrentWeek(w);
+    setCurrentDay(d);
+  };
+
+  const handleWeekChange = (w: number) => {
+    setCurrentWeek(Math.max(1, Math.min(40, w)));
   };
 
   const navItems: { id: Tab; icon: string; label: string }[] = [
@@ -48,142 +97,203 @@ const Index: React.FC = () => {
     { id: 'profile', icon: 'User', label: 'Профиль' },
   ];
 
-  const pageTitle: Record<Tab, string> = {
-    home: 'Твой дневник',
-    embryo: 'Наш малыш',
-    development: 'Развитие',
-    tips: 'Советы',
-    profile: 'Профиль',
-  };
-
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Декоративные пузыри фона */}
+      {/* Декоративные фоновые пятна */}
       <div className="bg-bubbles">
-        <div className="bubble w-64 h-64 bg-blush" style={{ top: '-5%', left: '-10%', animationDelay: '0s' }} />
-        <div className="bubble w-48 h-48 bg-lavender" style={{ top: '15%', right: '-8%', animationDelay: '3s' }} />
-        <div className="bubble w-80 h-80 bg-peach" style={{ bottom: '10%', left: '-15%', animationDelay: '6s' }} />
-        <div className="bubble w-56 h-56 bg-mint" style={{ bottom: '25%', right: '-10%', animationDelay: '9s' }} />
-        <div className="bubble w-32 h-32 bg-blush" style={{ top: '45%', left: '45%', animationDelay: '12s' }} />
+        <div className="bubble w-72 h-72 bg-blush" style={{ top: '-8%', right: '-15%', animationDelay: '0s' }} />
+        <div className="bubble w-56 h-56 bg-peach" style={{ top: '20%', left: '-12%', animationDelay: '4s' }} />
+        <div className="bubble w-40 h-40 bg-lavender" style={{ bottom: '30%', right: '-8%', animationDelay: '8s' }} />
       </div>
 
       <div className="relative z-10 max-w-md mx-auto pb-28">
 
-        {/* Шапка */}
-        <div className="px-5 pt-12 pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-golos text-sm text-muted-foreground">Привет, {profileName} 🌸</p>
-              <h1 className="font-cormorant text-3xl font-semibold text-foreground leading-tight">
-                {pageTitle[activeTab]}
-              </h1>
-            </div>
-            <div className="relative">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blush to-lavender flex items-center justify-center shadow-md">
-                <span className="font-cormorant text-2xl font-semibold text-primary">{currentWeek}</span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-primary flex items-center justify-center">
-                <span className="font-golos text-[8px] text-primary font-medium">нед</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* ===== ГЛАВНАЯ ===== */}
         {activeTab === 'home' && (
-          <div className="px-5 space-y-4 animate-fade-in-up">
-
-            {/* Баннер */}
-            <div className="card-soft rounded-3xl p-5 bg-gradient-to-br from-white/80 to-blush/30">
-              <div className="flex items-center gap-5">
-                <div className="flex-shrink-0 w-24 h-24">
-                  <Embryo3D week={currentWeek} />
-                </div>
-                <div>
-                  <p className="font-golos text-xs text-muted-foreground uppercase tracking-wide mb-1">До встречи</p>
-                  <p className="font-cormorant text-5xl font-light shimmer-text">{daysLeft}</p>
-                  <p className="font-golos text-sm text-muted-foreground">дней осталось</p>
-                </div>
+          <div className="animate-fade-in-up">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-10 pb-3">
+              <button className="relative">
+                <Icon name="Menu" size={24} className="text-foreground" />
+                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full" />
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="font-cormorant text-lg font-medium text-foreground capitalize">{currentMonthName}</span>
+                <Icon name="Calendar" size={20} className="text-foreground" />
+                <Icon name="Bell" size={20} className="text-foreground" />
               </div>
             </div>
 
-            {/* Переключатель недели */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleWeekChange(Math.max(1, currentWeek - 1))}
-                className="w-10 h-10 rounded-full bg-white/80 border border-border/40 flex items-center justify-center hover:bg-blush transition-all hover:scale-110 shadow-sm"
-              >
-                <Icon name="ChevronLeft" size={18} className="text-primary" />
-              </button>
-              <div key={animKey} className="flex-1 text-center animate-week-change">
-                <p className="font-cormorant text-xl font-medium text-foreground">{currentWeek} неделя</p>
-                <div className="h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden">
-                  <div className="week-progress h-full" style={{ width: `${(currentWeek / 40) * 100}%` }} />
-                </div>
+            {/* Горизонтальный календарь-неделя */}
+            <div className="px-3 mb-1">
+              <div className="flex items-center justify-between mb-2 px-2">
+                <button onClick={() => setWeekOffset(o => o - 1)} className="p-1">
+                  <Icon name="ChevronLeft" size={16} className="text-muted-foreground" />
+                </button>
+                <button onClick={() => setWeekOffset(o => o + 1)} className="p-1">
+                  <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
+                </button>
               </div>
-              <button
-                onClick={() => handleWeekChange(Math.min(40, currentWeek + 1))}
-                className="w-10 h-10 rounded-full bg-white/80 border border-border/40 flex items-center justify-center hover:bg-blush transition-all hover:scale-110 shadow-sm"
-              >
-                <Icon name="ChevronRight" size={18} className="text-primary" />
-              </button>
+
+              {/* Дни недели */}
+              <div className="grid grid-cols-7 gap-1">
+                {DAYS_SHORT.map((d, i) => (
+                  <div key={d} className="text-center">
+                    <p className={`font-golos text-xs font-medium mb-1.5 ${
+                      isSelected(weekDates[i]) ? 'text-primary' : 'text-muted-foreground'
+                    }`}>{d}</p>
+                    <button
+                      onClick={() => handleDateClick(weekDates[i])}
+                      className="relative w-full flex flex-col items-center"
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isSelected(weekDates[i])
+                          ? 'bg-foreground text-white shadow-lg'
+                          : isToday(weekDates[i])
+                          ? 'bg-blush text-foreground'
+                          : 'text-foreground hover:bg-muted'
+                      }`}>
+                        <span className="font-golos text-sm font-medium">{weekDates[i].getDate()}</span>
+                      </div>
+                      {/* Маркер-капля от выбранного дня */}
+                      {isSelected(weekDates[i]) && (
+                        <div className="mt-1 w-1.5 h-4 bg-muted-foreground/30 rounded-full" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Календарь */}
-            <WeekCalendar
-              currentWeek={currentWeek}
-              onWeekChange={handleWeekChange}
-              startDate={PREGNANCY_START}
-            />
+            {/* Большой круг эмбриона */}
+            <div className="flex justify-center py-4">
+              <Embryo3D
+                week={currentWeek}
+                day={currentDay}
+                onDetails={() => setShowDetails(!showDetails)}
+              />
+            </div>
+
+            {/* Детали (появляются по кнопке) */}
+            {showDetails && (
+              <div className="px-5 mb-4 animate-fade-in-up">
+                <WeekInfo week={currentWeek} />
+              </div>
+            )}
+
+            {/* My daily insights */}
+            <div className="px-5 mt-2">
+              <h2 className="font-cormorant text-2xl font-semibold text-foreground mb-3">Мой дневник</h2>
+              <div
+                ref={insightsRef}
+                className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {/* Записать симптомы */}
+                <div className="flex-shrink-0 w-[130px] snap-start">
+                  <div className="bg-white rounded-2xl p-4 h-[140px] flex flex-col justify-between border border-border/40 shadow-sm">
+                    <p className="font-golos text-sm font-medium text-foreground leading-tight">Записать симптомы</p>
+                    <div className="w-10 h-10 rounded-full bg-mint flex items-center justify-center self-start">
+                      <Icon name="Plus" size={20} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Беременность сегодня */}
+                <div className="flex-shrink-0 w-[130px] snap-start">
+                  <div className="rounded-2xl p-4 h-[140px] flex flex-col justify-between border-2 border-primary/30 bg-white shadow-sm">
+                    <p className="font-golos text-sm font-semibold text-primary leading-tight">Беременность сегодня</p>
+                    <span className="text-3xl self-end">🤰</span>
+                  </div>
+                </div>
+
+                {/* Питание */}
+                <div className="flex-shrink-0 w-[130px] snap-start">
+                  <div className="rounded-2xl p-4 h-[140px] flex flex-col justify-between border-2 border-primary/30 bg-white shadow-sm">
+                    <div>
+                      <p className="font-golos text-[10px] text-primary font-medium">Питание</p>
+                      <p className="font-golos text-sm font-medium text-foreground leading-tight mt-0.5">Что есть на {currentWeek} нед</p>
+                    </div>
+                    <span className="text-3xl self-end">🥗</span>
+                  </div>
+                </div>
+
+                {/* Упражнения */}
+                <div className="flex-shrink-0 w-[130px] snap-start">
+                  <div className="rounded-2xl p-4 h-[140px] flex flex-col justify-between border border-border/40 bg-white shadow-sm">
+                    <div>
+                      <p className="font-golos text-[10px] text-muted-foreground font-medium">Активность</p>
+                      <p className="font-golos text-sm font-medium text-foreground leading-tight mt-0.5">Упражнения для мамы</p>
+                    </div>
+                    <span className="text-3xl self-end">🧘‍♀️</span>
+                  </div>
+                </div>
+
+                {/* Самочувствие */}
+                <div className="flex-shrink-0 w-[130px] snap-start">
+                  <div className="rounded-2xl p-4 h-[140px] flex flex-col justify-between border border-border/40 bg-white shadow-sm">
+                    <p className="font-golos text-sm font-medium text-foreground leading-tight">Настроение</p>
+                    <span className="text-3xl self-end">😊</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Трекер */}
-            <WellbeingTracker week={currentWeek} />
+            <div className="px-5 mt-4">
+              <WellbeingTracker week={currentWeek} />
+            </div>
 
-            {/* Быстрый статус */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Быстрая статистика */}
+            <div className="px-5 mt-4 grid grid-cols-3 gap-3">
               {[
-                { icon: '🎀', label: 'Пол', value: 'Тайна' },
-                { icon: '❤️', label: 'Сердце', value: 'Стучит' },
-                { icon: '📅', label: 'Роды', value: new Date(dueDate).toLocaleDateString('ru', { day: 'numeric', month: 'short' }) },
+                { icon: '🎀', label: 'Триместр', value: currentWeek <= 13 ? 'I' : currentWeek <= 26 ? 'II' : 'III' },
+                { icon: '❤️', label: 'До родов', value: `${daysLeft} дн` },
+                { icon: '📅', label: 'ПДР', value: new Date(dueDate).toLocaleDateString('ru', { day: 'numeric', month: 'short' }) },
               ].map((s, i) => (
                 <div key={i} className="card-soft rounded-2xl p-3 text-center">
-                  <span className="text-2xl">{s.icon}</span>
-                  <p className="font-golos text-xs text-muted-foreground mt-1">{s.label}</p>
-                  <p className="font-cormorant text-sm font-semibold text-foreground">{s.value}</p>
+                  <span className="text-xl">{s.icon}</span>
+                  <p className="font-golos text-[10px] text-muted-foreground mt-1">{s.label}</p>
+                  <p className="font-cormorant text-base font-semibold text-foreground">{s.value}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ===== МАЛЫШ (3D) ===== */}
+        {/* ===== МАЛЫШ ===== */}
         {activeTab === 'embryo' && (
-          <div className="px-5 space-y-4 animate-fade-in-up">
-            <div className="card-soft rounded-3xl p-6">
+          <div className="px-5 pt-10 space-y-4 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="font-cormorant text-3xl font-semibold text-foreground">Наш малыш</h1>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blush to-lavender flex items-center justify-center shadow-md">
+                <span className="font-cormorant text-xl font-semibold text-primary">{currentWeek}</span>
+              </div>
+            </div>
+
+            <div className="card-soft rounded-3xl p-5">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <button
-                  onClick={() => handleWeekChange(Math.max(1, currentWeek - 1))}
+                  onClick={() => handleWeekChange(currentWeek - 1)}
                   className="w-10 h-10 rounded-full bg-blush flex items-center justify-center hover:bg-primary/20 transition-all hover:scale-110"
                 >
                   <Icon name="ChevronLeft" size={18} className="text-primary" />
                 </button>
                 <span className="font-cormorant text-2xl font-semibold text-foreground">{currentWeek} неделя</span>
                 <button
-                  onClick={() => handleWeekChange(Math.min(40, currentWeek + 1))}
+                  onClick={() => handleWeekChange(currentWeek + 1)}
                   className="w-10 h-10 rounded-full bg-blush flex items-center justify-center hover:bg-primary/20 transition-all hover:scale-110"
                 >
                   <Icon name="ChevronRight" size={18} className="text-primary" />
                 </button>
               </div>
-
-              <div key={animKey} className="flex justify-center animate-week-change">
-                <Embryo3D week={currentWeek} />
+              <div className="flex justify-center">
+                <Embryo3D week={currentWeek} day={currentDay} />
               </div>
             </div>
 
-            {/* Слайдер */}
             <div className="card-soft rounded-3xl p-5">
-              <p className="font-golos text-xs text-muted-foreground mb-3">Перемести, чтобы увидеть малыша на разных неделях</p>
+              <p className="font-golos text-xs text-muted-foreground mb-3">Посмотри малыша на разных сроках</p>
               <input
                 type="range"
                 min={1}
@@ -206,10 +316,11 @@ const Index: React.FC = () => {
 
         {/* ===== РАЗВИТИЕ ===== */}
         {activeTab === 'development' && (
-          <div className="px-5 space-y-4 animate-fade-in-up">
+          <div className="px-5 pt-10 space-y-4 animate-fade-in-up">
+            <h1 className="font-cormorant text-3xl font-semibold text-foreground mb-2">Развитие</h1>
             <div className="flex items-center gap-3 mb-1">
               <button
-                onClick={() => handleWeekChange(Math.max(1, currentWeek - 1))}
+                onClick={() => handleWeekChange(currentWeek - 1)}
                 className="w-10 h-10 rounded-full bg-blush flex items-center justify-center hover:bg-primary/20 transition-all"
               >
                 <Icon name="ChevronLeft" size={18} className="text-primary" />
@@ -218,21 +329,20 @@ const Index: React.FC = () => {
                 <p className="font-cormorant text-xl font-semibold text-foreground">{currentWeek} неделя</p>
               </div>
               <button
-                onClick={() => handleWeekChange(Math.min(40, currentWeek + 1))}
+                onClick={() => handleWeekChange(currentWeek + 1)}
                 className="w-10 h-10 rounded-full bg-blush flex items-center justify-center hover:bg-primary/20 transition-all"
               >
                 <Icon name="ChevronRight" size={18} className="text-primary" />
               </button>
             </div>
-            <div key={animKey} className="animate-week-change">
-              <WeekInfo week={currentWeek} />
-            </div>
+            <WeekInfo week={currentWeek} />
           </div>
         )}
 
         {/* ===== СОВЕТЫ ===== */}
         {activeTab === 'tips' && (
-          <div className="px-5 space-y-4 animate-fade-in-up">
+          <div className="px-5 pt-10 space-y-4 animate-fade-in-up">
+            <h1 className="font-cormorant text-3xl font-semibold text-foreground mb-2">Советы</h1>
             {TIPS.map((tip, i) => (
               <div key={i} className={`card-soft rounded-3xl p-5 ${tip.color}`}>
                 <div className="flex items-center gap-3 mb-3">
@@ -259,7 +369,9 @@ const Index: React.FC = () => {
 
         {/* ===== ПРОФИЛЬ ===== */}
         {activeTab === 'profile' && (
-          <div className="px-5 space-y-4 animate-fade-in-up">
+          <div className="px-5 pt-10 space-y-4 animate-fade-in-up">
+            <h1 className="font-cormorant text-3xl font-semibold text-foreground mb-2">Профиль</h1>
+
             <div className="card-soft rounded-3xl p-6 text-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blush to-lavender mx-auto flex items-center justify-center mb-3 shadow-md">
                 <span className="text-4xl">🌸</span>
@@ -298,7 +410,7 @@ const Index: React.FC = () => {
                     onClick={() => setEditingProfile(true)}
                     className="mt-3 px-5 py-2 rounded-xl border border-primary/30 font-golos text-sm text-primary hover:bg-blush/50 transition-all"
                   >
-                    Редактировать профиль
+                    Редактировать
                   </button>
                 </>
               )}
@@ -306,8 +418,8 @@ const Index: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Текущая неделя', value: `${currentWeek} нед`, emoji: '📅' },
-                { label: 'До родов', value: `${daysLeft} дней`, emoji: '🎀' },
+                { label: 'Неделя', value: `${currentWeek}`, emoji: '📅' },
+                { label: 'До родов', value: `${daysLeft} дн`, emoji: '🎀' },
                 { label: 'Триместр', value: currentWeek <= 13 ? 'Первый' : currentWeek <= 26 ? 'Второй' : 'Третий', emoji: '🌸' },
                 { label: 'ПДР', value: new Date(dueDate).toLocaleDateString('ru', { day: 'numeric', month: 'long' }), emoji: '💕' },
               ].map((stat, i) => (
@@ -340,7 +452,7 @@ const Index: React.FC = () => {
         )}
       </div>
 
-      {/* Нижняя навигация */}
+      {/* Навигация */}
       <nav className="fixed bottom-0 left-0 right-0 z-20">
         <div className="max-w-md mx-auto px-4 pb-4">
           <div className="card-soft rounded-3xl px-2 py-2 flex items-center justify-around">
