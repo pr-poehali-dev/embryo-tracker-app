@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 330 20% 25%;
 
-    --primary: 340 45% 72%;
+    --primary: 340 65% 62%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 20 50% 90%;
@@ -36,8 +36,43 @@
 
     --peach: 20 80% 88%;
     --lavender: 270 40% 88%;
-    --mint: 160 35% 85%;
+    --mint: 160 35% 75%;
     --blush: 340 50% 90%;
+  }
+
+  .dark {
+    --background: 330 15% 10%;
+    --foreground: 330 20% 92%;
+
+    --card: 330 15% 14%;
+    --card-foreground: 330 20% 92%;
+
+    --popover: 330 15% 14%;
+    --popover-foreground: 330 20% 92%;
+
+    --primary: 340 65% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 330 15% 18%;
+    --secondary-foreground: 330 20% 80%;
+
+    --muted: 330 15% 18%;
+    --muted-foreground: 330 10% 55%;
+
+    --accent: 280 20% 28%;
+    --accent-foreground: 280 30% 85%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 330 15% 22%;
+    --input: 330 15% 22%;
+    --ring: 340 45% 62%;
+
+    --peach: 20 40% 28%;
+    --lavender: 270 20% 28%;
+    --mint: 160 20% 25%;
+    --blush: 340 20% 22%;
   }
 }
 
@@ -45,12 +80,10 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
     font-family: "Golos Text", sans-serif;
   }
-
   h1,
   h2,
   h3 {
@@ -67,7 +100,6 @@
   }
 }
 
-/* Фоновые пузырьки */
 .bg-bubbles {
   position: fixed;
   top: 0;
@@ -82,7 +114,7 @@
 .bubble {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.18;
+  opacity: 0.15;
   animation: float-bubble 18s ease-in-out infinite;
 }
 
@@ -99,7 +131,6 @@
   }
 }
 
-/* 3D эмбрион */
 @keyframes embryo-float {
   0%,
   100% {
@@ -113,18 +144,6 @@
   }
   75% {
     transform: translateY(-12px) rotate(3deg);
-  }
-}
-
-@keyframes embryo-pulse {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
   }
 }
 
@@ -189,50 +208,67 @@
   }
 }
 
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-embryo-float {
   animation: embryo-float 6s ease-in-out infinite;
 }
-
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
 }
-
 .animate-slide-in {
   animation: slide-in 0.4s ease-out forwards;
 }
-
 .animate-week-change {
   animation: week-change 0.4s ease-out forwards;
 }
-
 .animate-heartbeat {
   animation: heartbeat 1.2s ease-in-out infinite;
 }
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out forwards;
+}
 
-/* Карточки */
 .card-soft {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 4px 24px rgba(200, 150, 160, 0.1);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+
+.dark .card-soft {
+  background: rgba(40, 25, 30, 0.75);
+  border: 1px solid rgba(80, 50, 60, 0.5);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .card-soft:hover {
   box-shadow: 0 8px 32px rgba(200, 150, 160, 0.18);
   transform: translateY(-2px);
-  transition: all 0.3s ease;
 }
 
-/* Навигация */
 .nav-item {
   transition: all 0.25s ease;
 }
-
 .nav-item.active {
   color: hsl(var(--primary));
 }
 
-/* Скролл */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -244,31 +280,43 @@
   border-radius: 2px;
 }
 
-/* Прогресс-бар недели */
 .week-progress {
   height: 6px;
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    hsl(340 45% 72%),
+    hsl(340 65% 62%),
     hsl(20 80% 75%),
     hsl(270 35% 78%)
   );
   transition: width 0.8s ease;
 }
 
-/* Shimmer эффект */
 .shimmer-text {
   background: linear-gradient(
     90deg,
-    hsl(340 45% 65%),
-    hsl(20 70% 70%),
-    hsl(270 35% 70%),
-    hsl(340 45% 65%)
+    hsl(340 55% 55%),
+    hsl(20 70% 65%),
+    hsl(270 35% 65%),
+    hsl(340 55% 55%)
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 4s linear infinite;
+}
+
+/* Цикл — цветовые маркеры */
+.phase-menstrual {
+  background: hsl(340 70% 65%);
+}
+.phase-follicular {
+  background: hsl(30 80% 70%);
+}
+.phase-ovulation {
+  background: hsl(160 50% 55%);
+}
+.phase-luteal {
+  background: hsl(270 45% 68%);
 }
