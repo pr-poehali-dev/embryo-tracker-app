@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Icon from '@/components/ui/icon';
 import CycleCalendar from '@/components/CycleCalendar';
+import AiChat from '@/components/AiChat';
 
 const DAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -104,7 +105,7 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState<'today' | 'tips' | 'messages' | 'partner'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'tips' | 'messages' | 'partner' | 'chat'>('today');
   const [showMarkPeriod, setShowMarkPeriod] = useState(false);
   const [markedDays, setMarkedDays] = useState<string[]>([]);
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -167,7 +168,8 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
   const navItems = [
     { id: 'today' as const, icon: 'Calendar', label: 'Сегодня' },
     { id: 'tips' as const, icon: 'Lightbulb', label: 'Советы' },
-    { id: 'messages' as const, icon: 'MessageCircle', label: 'Дневник' },
+    { id: 'chat' as const, icon: 'Sparkles', label: 'ИИ чат' },
+    { id: 'messages' as const, icon: 'BookOpen', label: 'Дневник' },
     { id: 'partner' as const, icon: 'Users', label: 'Партнёр' },
   ];
 
@@ -260,7 +262,21 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
 
             {/* Главный блок — обратный отсчёт */}
             <div className="px-5 py-6 text-center">
-              <p className="font-golos text-base text-foreground/70 mb-1">Месячные через</p>
+              {/* Выбранная дата */}
+              {!isToday(selectedDate) && (
+                <div className="inline-flex items-center gap-1.5 bg-muted rounded-full px-3 py-1 mb-3">
+                  <Icon name="Calendar" size={12} className="text-muted-foreground" />
+                  <span className="font-golos text-xs text-muted-foreground">
+                    {selectedDate.toLocaleDateString('ru', { day: 'numeric', month: 'long' })} · день цикла {selectedCycleDay}
+                  </span>
+                  <button onClick={() => setSelectedDate(today)} className="ml-1">
+                    <Icon name="X" size={11} className="text-muted-foreground" />
+                  </button>
+                </div>
+              )}
+              <p className="font-golos text-base text-foreground/70 mb-1">
+                {isToday(selectedDate) ? 'Месячные через' : 'Следующие месячные через'}
+              </p>
               <p className="font-cormorant text-7xl font-bold text-foreground leading-none mb-1">
                 {daysUntilPeriod}
               </p>
@@ -467,6 +483,23 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
                 </span>
                 <Icon name="ChevronRight" size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ===== ЧАТ С ИИ ===== */}
+        {activeTab === 'chat' && (
+          <div className="animate-fade-in-up flex flex-col" style={{ height: 'calc(100vh - 10rem)' }}>
+            <div className="px-5 pt-6 pb-3">
+              <h1 className="font-cormorant text-3xl font-semibold text-foreground">ИИ-ассистент 🌸</h1>
+              <p className="font-golos text-sm text-muted-foreground">Советы по здоровью и циклу</p>
+            </div>
+            <div className="flex-1 min-h-0">
+              <AiChat
+                cycleDay={selectedCycleDay}
+                phase={phase}
+                mode="cycle"
+              />
             </div>
           </div>
         )}

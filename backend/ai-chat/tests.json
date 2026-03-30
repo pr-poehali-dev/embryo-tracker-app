@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Chat message about cycle",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "messages": [{"role": "user", "content": "Привет! Расскажи про овуляцию"}],
+        "lang": "ru",
+        "context": {"mode": "cycle", "cycleDay": 14, "phase": "ovulation"}
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"reply": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

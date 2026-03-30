@@ -4,6 +4,7 @@ import WeekInfo from '@/components/WeekInfo';
 import WellbeingTracker from '@/components/WellbeingTracker';
 import CycleTracker from '@/components/CycleTracker';
 import PregnancyCalendar from '@/components/PregnancyCalendar';
+import AiChat from '@/components/AiChat';
 import Icon from '@/components/ui/icon';
 import { detectLang, translations } from '@/i18n';
 
@@ -11,7 +12,7 @@ const lang = detectLang();
 const t = translations[lang];
 
 type AppMode = 'pregnancy' | 'cycle';
-type Tab = 'home' | 'embryo' | 'development' | 'tips' | 'profile';
+type Tab = 'home' | 'embryo' | 'development' | 'tips' | 'chat' | 'profile';
 
 function getCurrentWeek(start: Date): number {
   const diff = new Date().getTime() - start.getTime();
@@ -116,7 +117,7 @@ const Index: React.FC = () => {
   const navItems: { id: Tab; icon: string; label: string }[] = [
     { id: 'home', icon: 'Home', label: t.navHome },
     { id: 'embryo', icon: 'Baby', label: t.navBaby },
-    { id: 'development', icon: 'BookOpen', label: t.navDevelopment },
+    { id: 'chat', icon: 'Sparkles', label: lang === 'ru' ? 'ИИ чат' : 'AI chat' },
     { id: 'tips', icon: 'Lightbulb', label: t.navTips },
     { id: 'profile', icon: 'User', label: t.navProfile },
   ];
@@ -413,6 +414,26 @@ const Index: React.FC = () => {
             </div>
             <WeekInfo week={currentWeek} />
             <WellbeingTracker week={currentWeek} />
+          </div>
+        )}
+
+        {/* ===== ЧАТ С ИИ ===== */}
+        {activeTab === 'chat' && (
+          <div className="animate-fade-in-up flex flex-col" style={{ height: 'calc(100vh - 10rem)' }}>
+            <div className="px-5 pt-4 pb-3">
+              <h1 className="font-cormorant text-3xl font-semibold text-foreground">
+                {lang === 'ru' ? 'ИИ-ассистент 🌸' : 'AI Assistant 🌸'}
+              </h1>
+              <p className="font-golos text-sm text-muted-foreground">
+                {lang === 'ru' ? 'Советы по беременности и здоровью' : 'Pregnancy & health advice'}
+              </p>
+            </div>
+            <div className="flex-1 min-h-0">
+              <AiChat
+                pregnancyWeek={currentWeek}
+                mode="pregnancy"
+              />
+            </div>
           </div>
         )}
 
