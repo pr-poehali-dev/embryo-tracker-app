@@ -117,10 +117,26 @@ Important rules:
         method='POST'
     )
 
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        result = json.loads(resp.read().decode('utf-8'))
-
-    reply = result['choices'][0]['message']['content']
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+        reply = result['choices'][0]['message']['content']
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        print(f'OpenAI error {e.code}: {error_body}')
+        if e.code == 401:
+            msg = 'Неверный API ключ OpenAI. Проверь ключ в настройках.' if lang == 'ru' else 'Invalid OpenAI API key. Please check your key.'
+        elif e.code == 429:
+            msg = 'Превышен лимит запросов OpenAI. Попробуй позже.' if lang == 'ru' else 'OpenAI rate limit exceeded. Please try later.'
+        elif e.code == 403:
+            msg = 'Доступ к OpenAI запрещён. Проверь ключ и баланс.' if lang == 'ru' else 'Access to OpenAI denied. Check your key and balance.'
+        else:
+            msg = f'Ошибка OpenAI ({e.code}). Попробуй позже.' if lang == 'ru' else f'OpenAI error ({e.code}). Please try later.'
+        return {
+            'statusCode': 200,
+            'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+            'body': json.dumps({'reply': msg})
+        }
 
     return {
         'statusCode': 200,
