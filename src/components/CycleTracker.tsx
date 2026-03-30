@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Icon from '@/components/ui/icon';
 import CycleCalendar from '@/components/CycleCalendar';
 import AiChat from '@/components/AiChat';
+import CycleSettings from '@/components/CycleSettings';
 
 const DAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -100,7 +101,9 @@ interface CycleTrackerProps {
 }
 
 const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
-  const [cycleLength] = useState(28);
+  const [cycleLength, setCycleLength] = useState(28);
+  const [showSettings, setShowSettings] = useState(false);
+  const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
   const [lastPeriodStart, setLastPeriodStart] = useState(new Date(2026, 2, 5));
   const [showCalendar, setShowCalendar] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -187,7 +190,10 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
           <div className="animate-fade-in-up">
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-10 pb-3">
-              <button className="relative w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md">
+              <button
+                onClick={() => setShowSettings(true)}
+                className="relative w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md hover:scale-105 transition-all"
+              >
                 <span className="text-xl">🐱</span>
                 <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-400 rounded-full border-2 border-background" />
               </button>
@@ -613,6 +619,21 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
           cycleLength={cycleLength}
           onClose={() => setShowCalendar(false)}
           onChangePeriodStart={(d) => { setLastPeriodStart(d); setShowCalendar(false); }}
+        />
+      )}
+
+      {/* Настройки */}
+      {showSettings && (
+        <CycleSettings
+          onClose={() => setShowSettings(false)}
+          cycleLength={cycleLength}
+          onCycleLengthChange={setCycleLength}
+          darkMode={darkMode}
+          onDarkModeToggle={() => {
+            const next = !darkMode;
+            setDarkMode(next);
+            document.documentElement.classList.toggle('dark', next);
+          }}
         />
       )}
     </div>
