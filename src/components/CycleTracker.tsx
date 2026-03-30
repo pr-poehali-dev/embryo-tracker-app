@@ -217,31 +217,34 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
               </div>
 
               <div className="grid grid-cols-7 gap-1">
-                {DAYS_SHORT.map((d, i) => (
-                  <div key={d} className="flex flex-col items-center gap-1">
-                    <span className={`font-golos text-[11px] font-medium ${
-                      isSelected(weekDates[i]) ? 'text-primary' : 'text-muted-foreground'
-                    }`}>{d}</span>
-                    <button
-                      onClick={() => setSelectedDate(weekDates[i])}
-                      className="relative flex flex-col items-center gap-0.5"
-                    >
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 font-golos text-sm font-medium
-                        ${isSelected(weekDates[i])
-                          ? 'bg-foreground text-background shadow-lg'
-                          : isToday(weekDates[i])
-                          ? 'bg-muted text-foreground font-bold'
-                          : isMarked(weekDates[i])
-                          ? 'bg-rose-200 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300'
-                          : 'text-foreground hover:bg-muted'}`}
-                      >
-                        {weekDates[i].getDate()}
-                      </div>
-                      {/* Фазовая точка */}
-                      <div className={`w-1.5 h-1.5 rounded-full ${getDayColor(weekDates[i])} ${isSelected(weekDates[i]) ? 'opacity-0' : 'opacity-70'}`} />
-                    </button>
-                  </div>
-                ))}
+                {DAYS_SHORT.map((d, i) => {
+                  const cd = getCycleDay(weekDates[i]);
+                  const phase = getDayPhase(weekDates[i]);
+                  const isMenstrual = cd <= 5;
+                  const phaseColors: Record<string, string> = {
+                    menstrual: 'bg-rose-400', follicular: 'bg-orange-300',
+                    ovulation: 'bg-emerald-400', luteal: 'bg-violet-300',
+                  };
+                  const selColor = phaseColors[phase];
+                  return (
+                    <div key={d} className="flex flex-col items-center gap-0.5">
+                      <span className={`font-golos text-[11px] font-medium ${isSelected(weekDates[i]) ? 'text-primary' : 'text-muted-foreground'}`}>{d}</span>
+                      <button onClick={() => setSelectedDate(weekDates[i])} className="relative flex flex-col items-center gap-0.5">
+                        {/* День цикла сверху */}
+                        <span className={`font-golos text-[8px] leading-none ${isSelected(weekDates[i]) ? 'text-primary font-semibold' : 'text-muted-foreground/60'}`}>{cd}</span>
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 font-golos text-sm font-medium
+                          ${isSelected(weekDates[i]) ? `${selColor} text-white shadow-lg`
+                            : isToday(weekDates[i]) ? 'ring-2 ring-primary text-primary font-bold bg-muted'
+                            : isMenstrual ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600'
+                            : 'text-foreground hover:bg-muted'}`}>
+                          {weekDates[i].getDate()}
+                        </div>
+                        {/* Цветная полоска фазы */}
+                        <div className={`w-5 h-1 rounded-full ${getDayColor(weekDates[i])} opacity-60`} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
