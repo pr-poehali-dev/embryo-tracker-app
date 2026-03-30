@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icon from '@/components/ui/icon';
+import CycleCalendar from '@/components/CycleCalendar';
 
 const DAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -99,7 +100,8 @@ interface CycleTrackerProps {
 
 const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
   const [cycleLength] = useState(28);
-  const [lastPeriodStart] = useState(new Date(2026, 2, 5)); // 5 марта 2026
+  const [lastPeriodStart, setLastPeriodStart] = useState(new Date(2026, 2, 5));
+  const [showCalendar, setShowCalendar] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<'today' | 'tips' | 'messages' | 'partner'>('today');
@@ -194,7 +196,10 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
                 </span>
               </div>
 
-              <button className="w-10 h-10 rounded-xl border border-border/60 flex items-center justify-center hover:bg-muted transition-all">
+              <button
+                onClick={() => setShowCalendar(true)}
+                className="w-10 h-10 rounded-xl border border-border/60 flex items-center justify-center hover:bg-muted transition-all"
+              >
                 <Icon name="Calendar" size={20} className="text-foreground" />
               </button>
             </div>
@@ -564,6 +569,16 @@ const CycleTracker: React.FC<CycleTrackerProps> = ({ onSwitchMode }) => {
           </div>
         </div>
       </nav>
+
+      {/* Полный календарь */}
+      {showCalendar && (
+        <CycleCalendar
+          periodStart={lastPeriodStart}
+          cycleLength={cycleLength}
+          onClose={() => setShowCalendar(false)}
+          onChangePeriodStart={(d) => { setLastPeriodStart(d); setShowCalendar(false); }}
+        />
+      )}
     </div>
   );
 };
